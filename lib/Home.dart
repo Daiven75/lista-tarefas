@@ -10,8 +10,10 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   List _listaTarefas = [];
+  Map<String, dynamic> _ultimaTarefaRemovida = Map();
   TextEditingController _controllerTarefa = TextEditingController();
 
   Future<File> _getFile() async {
@@ -59,7 +61,7 @@ class _HomeState extends State<Home> {
     return Column(
       children: <Widget>[
         Dismissible(
-          key: Key(_listaTarefas[index]["titulo"]),
+          key: Key(DateTime.now().millisecondsSinceEpoch.toString()),
           child: Row(
             children: <Widget>[
               Expanded(
@@ -104,8 +106,23 @@ class _HomeState extends State<Home> {
                     ),
                     FlatButton(
                       onPressed: () {
+                        _ultimaTarefaRemovida = _listaTarefas[index];
                         _listaTarefas.removeAt(index);
                         _salvarArquivo();
+                        final snackBar = SnackBar(
+                          content: Text("Desfazer"),
+                          duration: Duration(seconds: 4),
+                          action: SnackBarAction(
+                              label: "Desfazer",
+                              onPressed: () {
+                                setState(() {
+                                  _listaTarefas.insert(index, _ultimaTarefaRemovida);
+                                });
+                                _salvarArquivo();
+                              }
+                          ),
+                        );
+                        _scaffoldKey.currentState.showSnackBar(snackBar);
                         Navigator.of(context).pop(true);
                       },
                       child: Text('Sim'),
@@ -137,22 +154,25 @@ class _HomeState extends State<Home> {
 //    _salvarArquivo();
 //    print("Itens: " + _listaTarefas.toString());
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: Text("Lista de tarefas"),
         backgroundColor: Colors.purple,
       ),
-      body: Container(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          children: <Widget>[
-            Expanded(
-              child: ListView.builder(
-                  itemCount: _listaTarefas.length,
-                  itemBuilder: listaTarefa
-              ),
+      body: Builder(
+          builder: (context) => Container(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              children: <Widget>[
+                Expanded(
+                  child: ListView.builder(
+                      itemCount: _listaTarefas.length,
+                      itemBuilder: listaTarefa
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
       ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
