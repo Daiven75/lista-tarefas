@@ -43,7 +43,7 @@ class _HomeState extends State<Home> {
 
     String dados = json.encode(_listaTarefas);
     arquivo.writeAsString(dados);
-  
+
   }
 
   _lerArquivo() async {
@@ -53,6 +53,71 @@ class _HomeState extends State<Home> {
     } catch (e) {
       return null;
     }
+  }
+
+  Widget listaTarefa(context, index) {
+    return Column(
+      children: <Widget>[
+        Dismissible(
+          key: Key(_listaTarefas[index]["titulo"]),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: ListTile(
+                  title: Text(_listaTarefas[index]["titulo"]),
+                ),
+              ),
+              Checkbox(
+                value: _listaTarefas[index]["realizada"],
+                onChanged: (bool valorAlterado) {
+                  setState(() {
+                    _listaTarefas[index]["realizada"] = valorAlterado;
+                  });
+                  _salvarArquivo();
+                },
+              ),
+            ],
+          ),
+          background: Container(
+            color: Colors.red,
+            padding: EdgeInsets.all(16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[
+                Icon(Icons.delete, color: Colors.white),
+              ],
+            ),
+          ),
+          direction: DismissDirection.endToStart,
+          confirmDismiss: (direction) {
+            return showDialog(
+              context: context,
+              builder: (context) {
+                return CupertinoAlertDialog(
+                  title: Text('Deseja realmente excluir?'),
+                  actions: <Widget>[
+                    FlatButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(false);
+                      },
+                      child: Text('Não'),
+                    ),
+                    FlatButton(
+                      onPressed: () {
+                        _listaTarefas.removeAt(index);
+                        _salvarArquivo();
+                        Navigator.of(context).pop(true);
+                      },
+                      child: Text('Sim'),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        ),
+      ],
+    );
   }
 
   @override
@@ -81,33 +146,10 @@ class _HomeState extends State<Home> {
         child: Column(
           children: <Widget>[
             Expanded(
-                child: ListView.builder(
+              child: ListView.builder(
                   itemCount: _listaTarefas.length,
-                  itemBuilder: (context, index) {
-                    return Column(
-                      children: <Widget>[
-                            Row(
-                              children: <Widget>[
-                                Expanded(
-                                  child: ListTile(
-                                    title: Text(_listaTarefas[index]["titulo"]),
-                                  ),
-                                ),
-                                Checkbox(
-                                  value: _listaTarefas[index]["realizada"],
-                                  onChanged: (bool valorAlterado) {
-                                    setState(() {
-                                      _listaTarefas[index]["realizada"] = valorAlterado;
-                                    });
-                                    _salvarArquivo();
-                                  },
-                                ),
-                              ],
-                            ),
-                      ],
-                    );
-                  },
-                ),
+                  itemBuilder: listaTarefa
+              ),
             ),
           ],
         ),
@@ -118,8 +160,8 @@ class _HomeState extends State<Home> {
         elevation: 20,
         onPressed: () {
           print("chegou aqui");
-            showDialog(
-              context: context,
+          showDialog(
+            context: context,
             builder: (context) {
               return AlertDialog(
                 title:  Text("Adicionar tarefa"),
